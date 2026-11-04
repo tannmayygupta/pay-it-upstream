@@ -90,9 +90,16 @@ Coverage of `src/UpstreamSplitter.sol` (unit + fuzz): **100% lines (129/129), 10
 
 ## Deployment
 
-Local end-to-end run done with Anvil: deploy via `script/Deploy.s.sol`, sponsor 1 ETH, balances read back
-(0.4 / 0.2 / 0.1 / 0.2 / 0.1), one recipient withdrew, a stranger's `withdraw()` reverted with
-`NothingToWithdraw`, and an invalid split reverted with `BpsDoNotSumTo10000`.
+**Reproduce the whole story in one command, with no keys or faucet:**
+
+```bash
+bash scripts/demo-local.sh      # needs Foundry (anvil, forge, cast)
+```
+
+It deploys the splitter on a local Anvil chain, has a sponsor pay one address, shows the public split and
+each balance, shows a stranger, an invalid split and a `renounceOwnership` attempt all being rejected,
+lets recipients collect until the contract holds exactly 0, and shows 7 wei of dust being fully accounted for.
+The captured output of a real run is in [docs/LOCAL-DEMO.md](docs/LOCAL-DEMO.md).
 
 **Sepolia:** _not deployed yet. This section is filled with the real contract address, a real sponsor
 transaction and a real withdrawal transaction immediately after deployment._
@@ -117,9 +124,10 @@ ETH only; and the contract has had an independent AI review (findings fixed) but
 ```
 src/UpstreamSplitter.sol     the whole funds-handling contract
 script/Deploy.s.sol          env-driven deploy
+scripts/demo-local.sh        one-command local end-to-end demo (no keys needed)
 test/                        unit, fuzz and invariant tests, plus attacker contracts in test/helpers
 web/src/                     abi.ts, lib.ts (pure helpers + tests), App.tsx (reads straight from the contract)
-docs/                        ARCHITECTURE.md, THREAT-MODEL.md
+docs/                        ARCHITECTURE.md, THREAT-MODEL.md, LOCAL-DEMO.md (captured demo run)
 ```
 
 Prior art: [Drips](https://www.drips.network) splits open-source funding to maintainers and dependencies.
