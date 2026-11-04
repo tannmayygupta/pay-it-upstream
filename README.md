@@ -13,6 +13,29 @@ Build Battle 2, "Pay It Upstream".
 > maintainer, can quietly keep what belongs to someone else.
 > Both halves are enforced by code and proven by tests. See [Brief to evidence](#brief-to-evidence).
 
+## Verify it end to end in 3 commands
+
+Everything below runs on a clean machine with [Foundry](https://getfoundry.sh) and Node 22. No keys, faucet or
+accounts are needed.
+
+```bash
+git clone --recurse-submodules https://github.com/tannmayygupta/pay-it-upstream && cd pay-it-upstream
+forge test                  # 48 unit + 5 fuzz + 7 invariants: the money guarantees
+bash scripts/demo-local.sh  # deploy, sponsor, split, collect, attacks rejected, contract ends at 0
+```
+
+| Step | What it shows | Proof |
+| --- | --- | --- |
+| Contract | One address takes ETH, public split, pull withdrawals, no sweep | `src/UpstreamSplitter.sol` |
+| Tests | Maintainer cannot touch funds; nobody can take another's balance | `forge test` (54 tests, 100% line, statement, branch and function coverage) |
+| End to end | Real deploy and real transactions on a local chain | `scripts/demo-local.sh`, captured in [docs/LOCAL-DEMO.md](docs/LOCAL-DEMO.md) |
+| Web page | Plain-language split, "You are owed X", Collect button, all read from the contract | `cd web && npm i && npm test && npm run build` |
+| Testnet | Same deploy script targets Sepolia | `script/Deploy.s.sol`, see [Deployment](#deployment) |
+
+**Live status, stated plainly:** the contract is **not yet deployed to Sepolia**; every other piece above is
+built and verified locally. The Sepolia address and transaction links will be added in this README the moment
+the deployment is made.
+
 ## How it works, in plain words
 
 1. **Sponsors pay one address**: the contract. Plain ETH transfer, or `fund()`.
