@@ -81,14 +81,12 @@ npm run dev
 
 | Layer | What | Count |
 | --- | --- | --- |
-| Unit | Every revert, every edge case: dust, 1 wei, 0 wei, 30 recipients, forced ETH, reentrancy, reverting and return-bomb recipients, governance, ownership | 45 |
+| Unit | Every revert, every edge case: dust, 1 wei, 0 wei, 30 recipients, forced ETH, reentrancy, reverting and return-bomb recipients, governance, ownership | 48 |
 | Fuzz | Random splits and amounts: credited == deposited, dust bound, deposits then full withdrawal ends at zero, strangers cannot touch balances | 5 |
 | Invariant (7 properties) | A random walk of sponsors, recipients, strangers **and the owner** (16,384 calls per run): solvency, balance equals flows, credited equals deposited plus synced, sum of balances equals outstanding, nobody withdraws more than earned, split always sums to 10,000 | 7 |
 | Web | Percent and ETH formatting, deposit preview that mirrors the contract's rounding, input parsing, plain-language errors | 9 |
 
-Coverage of `src/UpstreamSplitter.sol`: **100% lines (119/119), 100% functions (20/20)**, 99.3% statements,
-96.2% branches. The one branch the tool reports as unhit is the constructor name-length check; its test
-exists and passes, which looks like a coverage-tool quirk with reverting constructors, not a missing test.
+Coverage of `src/UpstreamSplitter.sol` (unit + fuzz): **100% lines (129/129), 100% statements (150/150), 100% branches (29/29), 100% functions (23/23)**.
 
 ## Deployment
 

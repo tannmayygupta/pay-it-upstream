@@ -19,3 +19,4 @@ web/dist/
 # OS / editor
 .DS_Store
 *.log
+cov.info

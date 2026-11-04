@@ -65,14 +65,35 @@ contract UpstreamSplitterTest is Test {
         assertEq(got.length, 5);
     }
 
-    function test_constructor_rejectsBadInputs() public {
+    function test_constructor_rejectsDelayTooShort() public {
         UpstreamSplitter.Share[] memory sh = _defaultSplit();
         vm.expectRevert(UpstreamSplitter.DelayOutOfRange.selector);
         new UpstreamSplitter("x", maintainer, sh, 1 minutes);
+    }
+
+    function test_constructor_rejectsDelayTooLong() public {
+        UpstreamSplitter.Share[] memory sh = _defaultSplit();
         vm.expectRevert(UpstreamSplitter.DelayOutOfRange.selector);
         new UpstreamSplitter("x", maintainer, sh, 31 days);
+    }
+
+    function test_constructor_rejectsNameTooLong() public {
+        UpstreamSplitter.Share[] memory sh = _defaultSplit();
+        bytes memory longName = new bytes(97);
+        for (uint256 i; i < longName.length; ++i) {
+            longName[i] = "a";
+        }
         vm.expectRevert(UpstreamSplitter.NameTooLong.selector);
-        new UpstreamSplitter(string(new bytes(97)), maintainer, sh, DELAY);
+        new UpstreamSplitter(string(longName), maintainer, sh, DELAY);
+    }
+
+    function test_constructor_acceptsMaxLengthName() public {
+        bytes memory name = new bytes(96);
+        for (uint256 i; i < name.length; ++i) {
+            name[i] = "a";
+        }
+        UpstreamSplitter t = new UpstreamSplitter(string(name), maintainer, _defaultSplit(), DELAY);
+        assertEq(bytes(t.projectName()).length, 96);
     }
 
     // ------------------------------------------------------------------ validation (via constructor)
