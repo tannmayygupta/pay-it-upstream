@@ -151,7 +151,7 @@ function Dashboard({ address }: { address: `0x${string}` }) {
         )}
       </section>
 
-      <Sponsor address={address} split={split} onDone={refetch} />
+      <Sponsor address={address} split={split} version={version ?? 1n} onDone={refetch} />
       <MyMoney address={address} onDone={refetch} />
       <Lookup address={address} />
       <Pending address={address} pending={pending} frozen={!!frozen} onDone={refetch} />
@@ -198,7 +198,7 @@ function Wallet() {
   );
 }
 
-function Sponsor({ address, split, onDone }: { address: `0x${string}`; split: Share[]; onDone: () => void }) {
+function Sponsor({ address, split, version, onDone }: { address: `0x${string}`; split: Share[]; version: bigint; onDone: () => void }) {
   const [text, setText] = useState("0.01");
   const tx = useTx();
   const { isConnected } = useAccount();
@@ -214,7 +214,7 @@ function Sponsor({ address, split, onDone }: { address: `0x${string}`; split: Sh
         <input id="amt" inputMode="decimal" value={text} onChange={(e) => { setText(e.target.value); tx.reset(); }} />
         <button
           disabled={!wei || !isConnected || tx.waiting}
-          onClick={() => wei && tx.send({ address, abi: splitterAbi, functionName: "fund", value: wei, chainId: chain.id })}
+          onClick={() => wei && tx.send({ address, abi: splitterAbi, functionName: "fundWithVersion", args: [version], value: wei, chainId: chain.id })}
         >
           Send {wei ? formatEth(wei) : ""}
         </button>

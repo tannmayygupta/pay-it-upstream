@@ -105,7 +105,11 @@ contract Handler is Test {
     }
 
     function activate() external {
-        try s.activateSplit() {} catch {}
+        uint256 before_ = s.totalCredited();
+        try s.activateSplit() {
+            // activation settles any stray ETH under the old split
+            ghostSynced += s.totalCredited() - before_;
+        } catch {}
     }
 
     function warp(uint32 secs) external {

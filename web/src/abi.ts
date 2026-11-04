@@ -162,6 +162,19 @@ export const splitterAbi = [
   },
   {
     "type": "function",
+    "name": "fundWithVersion",
+    "inputs": [
+      {
+        "name": "expectedVersion",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "getPendingSplit",
     "inputs": [],
     "outputs": [
@@ -381,7 +394,7 @@ export const splitterAbi = [
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -810,6 +823,11 @@ export const splitterAbi = [
   },
   {
     "type": "error",
+    "name": "RenounceDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SplitIsFrozen",
     "inputs": []
   },
@@ -833,6 +851,22 @@ export const splitterAbi = [
     "type": "error",
     "name": "TransferFailed",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WrongSplitVersion",
+    "inputs": [
+      {
+        "name": "expected",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "actual",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",

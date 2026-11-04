@@ -78,6 +78,7 @@ describe("friendlyError", () => {
     expect(friendlyError(new Error("insufficient funds for gas"))).toMatch(/enough ETH/i);
     expect(friendlyError(new Error("weird"))).toMatch(/Something went wrong/);
     expect(friendlyError("TransferFailed")).toMatch(/different address/);
+    expect(friendlyError(new Error("WrongSplitVersion(1, 2)"))).toMatch(/split changed/i);
   });
 });
 

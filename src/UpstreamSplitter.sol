@@ -26,8 +26,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 ///        `sync()` to split such stray ETH using the current split.
 ///      - Guarded exit: `withdraw` zeroes the balance before sending and is
 ///        `nonReentrant`.
-///      - The owner cannot raise a split on money already credited: a new split
-///        applies only to deposits made after it is activated.
+///      - The owner cannot change how money already received is split: activating a new split
+///        first credits any stray ETH under the OLD split, and a new split applies only to
+///        deposits made after it is activated.
 contract UpstreamSplitter is Ownable2Step, ReentrancyGuard {
     // ---------------------------------------------------------------------
     // Types and constants
@@ -69,6 +70,8 @@ contract UpstreamSplitter is Ownable2Step, ReentrancyGuard {
     error SplitNotReady(uint256 activatesAt);
     error NothingToWithdraw();
     error TransferFailed();
+    error WrongSplitVersion(uint256 expected, uint256 actual);
+    error RenounceDisabled();
 
     // ---------------------------------------------------------------------
     // Events
@@ -156,15 +159,30 @@ contract UpstreamSplitter is Ownable2Step, ReentrancyGuard {
         _credit(msg.value);
     }
 
+    /// @notice Like `fund()` but only if the active split is the one the sponsor looked at.
+    ///         Protects a sponsor whose transaction is in flight while a pending split activates.
+    function fundWithVersion(uint256 expectedVersion) external payable {
+        if (splitVersion != expectedVersion) revert WrongSplitVersion(expectedVersion, splitVersion);
+        if (msg.value == 0) revert ZeroValue();
+        emit Funded(msg.sender, msg.value, splitVersion);
+        _credit(msg.value);
+    }
+
     /// @notice Split ETH that arrived without calling `receive` (e.g. forced in by selfdestruct
     ///         or sent as a block reward). Anyone may call; nobody gains special rights.
     function sync() external {
+        if (_syncStray() == 0) revert ZeroValue();
+    }
+
+    /// @dev Credit any untracked ETH under the CURRENT split and return the amount credited.
+    function _syncStray() private returns (uint256 stray) {
         uint256 owedNow = totalCredited - totalWithdrawn;
         uint256 balance = address(this).balance;
-        uint256 stray = balance > owedNow ? balance - owedNow : 0;
-        if (stray == 0) revert ZeroValue();
-        emit StrayEthSynced(stray);
-        _credit(stray);
+        stray = balance > owedNow ? balance - owedNow : 0;
+        if (stray != 0) {
+            emit StrayEthSynced(stray);
+            _credit(stray);
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -220,6 +238,8 @@ contract UpstreamSplitter is Ownable2Step, ReentrancyGuard {
         uint256 eta = pendingActivatesAt;
         if (eta == 0) revert NoPendingSplit();
         if (block.timestamp < eta) revert SplitNotReady(eta);
+        // Money that arrived before this change is split by the OLD split.
+        _syncStray();
         delete _shares;
         uint256 n = _pending.length;
         for (uint256 i; i < n; ++i) {
@@ -231,6 +251,12 @@ contract UpstreamSplitter is Ownable2Step, ReentrancyGuard {
             ++splitVersion;
         }
         emit SplitActivated(splitVersion, _shares);
+    }
+
+    /// @notice Disabled. Renouncing would leave a pending proposal impossible to cancel while the
+    ///         split still looks changeable. Use `freezeSplit()` to give up the power cleanly.
+    function renounceOwnership() public view override onlyOwner {
+        revert RenounceDisabled();
     }
 
     /// @notice Lock the current split forever. Also drops any pending proposal. Irreversible.

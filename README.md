@@ -54,6 +54,7 @@ Sponsor ──ETH──▶ UpstreamSplitter ──credit──▶ owed[Meera] ow
 - **The last share takes the rounding remainder.** Dust is at most `n-1` wei per deposit, bounded by a fuzz
   test. The UI marks the last person "gets rounding leftovers" so nothing is hidden. Put your most
   patient recipient last.
+- **`renounceOwnership` is disabled** (use `freezeSplit()` instead), and **`fundWithVersion(v)`** makes a sponsor's payment revert if the split changed under them. The web page uses it.
 - **The split can change, but publicly and for the future only.** Meera can propose a new split. It is
   visible on-chain and in the UI for `splitChangeDelay` (1 hour to 30 days). Then anyone can activate it.
   Already-credited balances are never touched. She can also `freezeSplit()` to make the current split permanent.
@@ -80,9 +81,9 @@ npm run dev
 
 | Layer | What | Count |
 | --- | --- | --- |
-| Unit | Every revert, every edge case: dust, 1 wei, 0 wei, 30 recipients, forced ETH, reentrancy, reverting and return-bomb recipients, governance, ownership | 40 |
+| Unit | Every revert, every edge case: dust, 1 wei, 0 wei, 30 recipients, forced ETH, reentrancy, reverting and return-bomb recipients, governance, ownership | 45 |
 | Fuzz | Random splits and amounts: credited == deposited, dust bound, deposits then full withdrawal ends at zero, strangers cannot touch balances | 5 |
-| Invariant | A random walk of sponsors, recipients, strangers **and the owner** (16,384 calls per run): solvency, balance equals flows, credited equals deposited plus synced, sum of balances equals outstanding, nobody withdraws more than earned, split always sums to 10,000 | 7 |
+| Invariant (7 properties) | A random walk of sponsors, recipients, strangers **and the owner** (16,384 calls per run): solvency, balance equals flows, credited equals deposited plus synced, sum of balances equals outstanding, nobody withdraws more than earned, split always sums to 10,000 | 7 |
 | Web | Percent and ETH formatting, deposit preview that mirrors the contract's rounding, input parsing, plain-language errors | 9 |
 
 Coverage of `src/UpstreamSplitter.sol`: **100% lines (119/119), 100% functions (20/20)**, 99.3% statements,
@@ -111,7 +112,7 @@ forge script script/Deploy.s.sol --rpc-url sepolia --account <keystore-name> --b
 See [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md). In short: the maintainer can still redirect **future**
 payments after the public delay (sponsors can see this coming, and `freezeSplit()` removes the power);
 a recipient who loses their key loses their balance (they can pre-set a safe address with `withdrawTo`);
-ETH only; and the contract has not been independently audited.
+ETH only; and the contract has had an independent AI review (findings fixed) but no human audit.
 
 ## Layout
 

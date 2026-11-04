@@ -68,6 +68,8 @@ const MESSAGES: Record<string, string> = {
   SplitNotReady: "The public waiting period for this change has not finished yet.",
   NoPendingSplit: "There is no pending change.",
   SplitIsFrozen: "The split is locked forever.",
+  WrongSplitVersion:
+    "The split changed while you were paying, so your payment was stopped. Reload the page, check the new split, and try again.",
   OwnableUnauthorizedAccount: "Only the maintainer can do that.",
 };
 

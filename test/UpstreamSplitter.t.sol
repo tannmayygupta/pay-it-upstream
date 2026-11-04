@@ -508,8 +508,6 @@ contract UpstreamSplitterTest is Test {
         vm.stopPrank();
         vm.prank(alice);
         s.acceptOwnership();
-        vm.prank(alice);
-        s.renounceOwnership();
 
         assertEq(address(s).balance, contractBefore);
         assertEq(maintainer.balance, ownerBefore);
@@ -533,5 +531,69 @@ contract UpstreamSplitterTest is Test {
         assertEq(address(s).balance, 0);
         assertEq(s.outstanding(), 0);
         assertEq(s.totalWithdrawn(), s.totalCredited());
+    }
+
+    // ------------------------------------------------------------------ review fixes
+
+    function test_renounceOwnership_isDisabled() public {
+        vm.prank(maintainer);
+        vm.expectRevert(UpstreamSplitter.RenounceDisabled.selector);
+        s.renounceOwnership();
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger));
+        s.renounceOwnership();
+        assertEq(s.owner(), maintainer);
+    }
+
+    function test_strayEth_isSplitByTheSplitInForceWhenItArrived() public {
+        // 1 ETH is forced in under the old split. The owner then pushes a 100%-to-self split.
+        ForceSender f = new ForceSender();
+        vm.deal(address(f), 1 ether);
+        f.boom(payable(address(s)));
+
+        UpstreamSplitter.Share[] memory greedy = new UpstreamSplitter.Share[](1);
+        greedy[0] = _share(maintainer, 10_000, "greedy");
+        vm.prank(maintainer);
+        s.proposeSplit(greedy);
+        vm.warp(block.timestamp + DELAY);
+
+        s.activateSplit(); // settles the stray ETH under the OLD split first
+        assertEq(s.owed(maintainer), 0.4 ether);
+        assertEq(s.owed(alice), 0.2 ether);
+        assertEq(s.owed(libB), 0.1 ether);
+        assertEq(s.unaccounted(), 0);
+        vm.expectRevert(UpstreamSplitter.ZeroValue.selector);
+        s.sync();
+    }
+
+    function test_activate_withNoStrayEth_stillWorks() public {
+        vm.prank(maintainer);
+        s.proposeSplit(_newSplit());
+        vm.warp(block.timestamp + DELAY);
+        s.activateSplit();
+        assertEq(s.splitVersion(), 2);
+        assertEq(s.totalCredited(), 0);
+    }
+
+    function test_fundWithVersion_protectsAgainstSplitSwap() public {
+        vm.prank(maintainer);
+        s.proposeSplit(_newSplit());
+        vm.warp(block.timestamp + DELAY);
+        s.activateSplit(); // version is now 2; the sponsor signed against version 1
+
+        vm.prank(sponsor);
+        vm.expectRevert(abi.encodeWithSelector(UpstreamSplitter.WrongSplitVersion.selector, 1, 2));
+        s.fundWithVersion{value: 1 ether}(1);
+
+        vm.prank(sponsor);
+        s.fundWithVersion{value: 1 ether}(2);
+        assertEq(s.owed(libA), 0.1 ether);
+        assertEq(s.totalCredited(), 1 ether);
+    }
+
+    function test_fundWithVersion_zeroValueReverts() public {
+        vm.prank(sponsor);
+        vm.expectRevert(UpstreamSplitter.ZeroValue.selector);
+        s.fundWithVersion{value: 0}(1);
     }
 }
