@@ -124,16 +124,18 @@ each balance, shows a stranger, an invalid split and a `renounceOwnership` attem
 lets recipients collect until the contract holds exactly 0, and shows 7 wei of dust being fully accounted for.
 The captured output of a real run is in [docs/LOCAL-DEMO.md](docs/LOCAL-DEMO.md).
 
-**Sepolia:** _not deployed yet. This section is filled with the real contract address, a real sponsor
-transaction and a real withdrawal transaction immediately after deployment._
+**Sepolia status:** not deployed yet. No contract address is listed because none exists.
 
-To deploy:
+**Roadmap: Sepolia deployment (two commands).** The deploy path is built and was exercised end to end on a
+local chain by `scripts/demo-local.sh`. Putting it on Sepolia needs only a funded deployer key and the same script:
 
 ```bash
-cp .env.example .env   # fill recipients, RPC and Etherscan key
-source .env
+cp .env.example .env     # set SEPOLIA_RPC_URL, ETHERSCAN_API_KEY, PROJECT_NAME, MAINTAINER, R0_*..R4_*
 forge script script/Deploy.s.sol --rpc-url sepolia --account <keystore-name> --broadcast --verify
 ```
+
+Then point the web page at it by setting `VITE_SPLITTER_ADDRESS` in `web/.env` and running `npm run build`.
+Once deployed, the contract address and a real sponsor and withdrawal transaction will be added to this section.
 
 ## Honest limits
 
